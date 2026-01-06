@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -147,7 +148,8 @@ function SortableCategoryItem({
   onSelect,
   onToggle,
   onEdit,
-  onDelete
+  onDelete,
+  isAdmin
 }: { 
   category: Category;
   selectedCategory: string | null;
@@ -156,6 +158,7 @@ function SortableCategoryItem({
   onToggle: (id: string) => void;
   onEdit: (cat: Category) => void;
   onDelete: (id: string, name: string) => void;
+  isAdmin: boolean;
 }) {
   const {
     attributes,
@@ -202,22 +205,26 @@ function SortableCategoryItem({
             />
           )}
         </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 w-8 p-0"
-          onClick={() => onEdit(category)}
-        >
-          <Icon name="Edit" size={14} />
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-          onClick={() => onDelete(category.id, category.name)}
-        >
-          <Icon name="Trash2" size={14} />
-        </Button>
+        {isAdmin && (
+          <>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              onClick={() => onEdit(category)}
+            >
+              <Icon name="Edit" size={14} />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              onClick={() => onDelete(category.id, category.name)}
+            >
+              <Icon name="Trash2" size={14} />
+            </Button>
+          </>
+        )}
       </div>
       {category.subcategories && expandedCategories.includes(category.id) && (
         <div className="ml-6 space-y-1">
@@ -232,22 +239,26 @@ function SortableCategoryItem({
                 <Icon name={sub.icon as any} size={16} className="mr-2" />
                 {sub.name}
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0"
-                onClick={() => onEdit(sub)}
-              >
-                <Icon name="Edit" size={12} />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                onClick={() => onDelete(sub.id, sub.name)}
-              >
-                <Icon name="Trash2" size={12} />
-              </Button>
+              {isAdmin && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={() => onEdit(sub)}
+                  >
+                    <Icon name="Edit" size={12} />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                    onClick={() => onDelete(sub.id, sub.name)}
+                  >
+                    <Icon name="Trash2" size={12} />
+                  </Button>
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -257,6 +268,8 @@ function SortableCategoryItem({
 }
 
 export default function KnowledgeBase() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [faqs, setFaqs] = useState<FAQItem[]>(initialFAQs);
   const [searchQuery, setSearchQuery] = useState('');
@@ -513,13 +526,14 @@ export default function KnowledgeBase() {
               className="pl-10 h-12 text-lg border-2 focus:border-primary"
             />
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="lg" className="gradient-bg hover:opacity-90 transition-opacity h-12 px-8">
-                <Icon name="Plus" size={20} className="mr-2" />
-                Добавить вопрос
-              </Button>
-            </DialogTrigger>
+          {isAdmin && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="lg" className="gradient-bg hover:opacity-90 transition-opacity h-12 px-8">
+                  <Icon name="Plus" size={20} className="mr-2" />
+                  Добавить вопрос
+                </Button>
+              </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl">Добавить новый вопрос</DialogTitle>
@@ -593,7 +607,8 @@ export default function KnowledgeBase() {
                 </Button>
               </div>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          )}
         </div>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -787,13 +802,15 @@ export default function KnowledgeBase() {
                     <Icon name="FolderTree" size={24} />
                     <CardTitle>Каталог</CardTitle>
                   </div>
-                  <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
-                        <Icon name="Plus" size={16} />
-                      </Button>
-                    </DialogTrigger>
-                  </Dialog>
+                  {isAdmin && (
+                    <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
+                          <Icon name="Plus" size={16} />
+                        </Button>
+                      </DialogTrigger>
+                    </Dialog>
+                  )}
                 </div>
                 <CardDescription className="text-white/80">
                   Перетащите для изменения порядка
@@ -830,6 +847,7 @@ export default function KnowledgeBase() {
                           onToggle={toggleCategory}
                           onEdit={openEditCategoryDialog}
                           onDelete={handleDeleteCategory}
+                          isAdmin={isAdmin}
                         />
                       ))}
                     </SortableContext>
@@ -922,23 +940,27 @@ export default function KnowledgeBase() {
                           <Icon name="Share2" size={16} className="mr-1" />
                           Поделиться
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => openEditDialog(faq)}
-                        >
-                          <Icon name="Edit" size={16} className="mr-1" />
-                          Редактировать
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleDeleteQuestion(faq.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Icon name="Trash2" size={16} className="mr-1" />
-                          Удалить
-                        </Button>
+                        {isAdmin && (
+                          <>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => openEditDialog(faq)}
+                            >
+                              <Icon name="Edit" size={16} className="mr-1" />
+                              Редактировать
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteQuestion(faq.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Icon name="Trash2" size={16} className="mr-1" />
+                              Удалить
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </AccordionContent>
