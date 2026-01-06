@@ -9,8 +9,24 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface FAQItem {
   id: string;
@@ -124,6 +140,122 @@ const iconOptions = [
   'MessageCircle', 'Package', 'Activity', 'Bell', 'Briefcase', 'Calendar'
 ];
 
+function SortableCategoryItem({ 
+  category, 
+  selectedCategory,
+  expandedCategories,
+  onSelect,
+  onToggle,
+  onEdit,
+  onDelete
+}: { 
+  category: Category;
+  selectedCategory: string | null;
+  expandedCategories: string[];
+  onSelect: (name: string) => void;
+  onToggle: (id: string) => void;
+  onEdit: (cat: Category) => void;
+  onDelete: (id: string, name: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="space-y-1">
+      <div className="flex items-center gap-1">
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded"
+        >
+          <Icon name="GripVertical" size={16} className="text-muted-foreground" />
+        </div>
+        <Button
+          variant={selectedCategory === category.name ? 'default' : 'ghost'}
+          className="flex-1 justify-start"
+          onClick={() => {
+            onSelect(category.name);
+            if (category.subcategories) {
+              onToggle(category.id);
+            }
+          }}
+        >
+          <Icon name={category.icon as any} size={18} className="mr-2" />
+          {category.name}
+          {category.subcategories && (
+            <Icon
+              name={expandedCategories.includes(category.id) ? 'ChevronDown' : 'ChevronRight'}
+              size={16}
+              className="ml-auto"
+            />
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0"
+          onClick={() => onEdit(category)}
+        >
+          <Icon name="Edit" size={14} />
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+          onClick={() => onDelete(category.id, category.name)}
+        >
+          <Icon name="Trash2" size={14} />
+        </Button>
+      </div>
+      {category.subcategories && expandedCategories.includes(category.id) && (
+        <div className="ml-6 space-y-1">
+          {category.subcategories.map((sub) => (
+            <div key={sub.id} className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 justify-start"
+                onClick={() => onSelect(sub.name)}
+              >
+                <Icon name={sub.icon as any} size={16} className="mr-2" />
+                {sub.name}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0"
+                onClick={() => onEdit(sub)}
+              >
+                <Icon name="Edit" size={12} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                onClick={() => onDelete(sub.id, sub.name)}
+              >
+                <Icon name="Trash2" size={12} />
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function KnowledgeBase() {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [faqs, setFaqs] = useState<FAQItem[]>(initialFAQs);
@@ -138,6 +270,13 @@ export default function KnowledgeBase() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newQuestion, setNewQuestion] = useState({ question: '', answer: '', category: '', tags: '', image: '', video: '' });
   const [newCategory, setNewCategory] = useState({ name: '', icon: 'Folder', parentId: '' });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const filteredFAQs = faqs.filter(faq => {
     const matchesSearch = searchQuery === '' ||
@@ -156,6 +295,24 @@ export default function KnowledgeBase() {
         ? prev.filter(id => id !== categoryId)
         : [...prev, categoryId]
     );
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setCategories((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+
+      toast({
+        title: "Порядок изменен",
+        description: "Категории переставлены"
+      });
+    }
   };
 
   const handleAddQuestion = () => {
@@ -639,7 +796,7 @@ export default function KnowledgeBase() {
                   </Dialog>
                 </div>
                 <CardDescription className="text-white/80">
-                  Навигация по темам
+                  Перетащите для изменения порядка
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4">
@@ -653,81 +810,30 @@ export default function KnowledgeBase() {
                     Все категории
                     <Badge variant="secondary" className="ml-auto">{faqs.length}</Badge>
                   </Button>
-                  {categories.map((category) => (
-                    <div key={category.id} className="space-y-1">
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant={selectedCategory === category.name ? 'default' : 'ghost'}
-                          className="flex-1 justify-start"
-                          onClick={() => {
-                            setSelectedCategory(category.name);
-                            if (category.subcategories) {
-                              toggleCategory(category.id);
-                            }
-                          }}
-                        >
-                          <Icon name={category.icon as any} size={18} className="mr-2" />
-                          {category.name}
-                          {category.subcategories && (
-                            <Icon
-                              name={expandedCategories.includes(category.id) ? 'ChevronDown' : 'ChevronRight'}
-                              size={16}
-                              className="ml-auto"
-                            />
-                          )}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => openEditCategoryDialog(category)}
-                        >
-                          <Icon name="Edit" size={14} />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                          onClick={() => handleDeleteCategory(category.id, category.name)}
-                        >
-                          <Icon name="Trash2" size={14} />
-                        </Button>
-                      </div>
-                      {category.subcategories && expandedCategories.includes(category.id) && (
-                        <div className="ml-6 space-y-1">
-                          {category.subcategories.map((sub) => (
-                            <div key={sub.id} className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="flex-1 justify-start"
-                                onClick={() => setSelectedCategory(sub.name)}
-                              >
-                                <Icon name={sub.icon as any} size={16} className="mr-2" />
-                                {sub.name}
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0"
-                                onClick={() => openEditCategoryDialog(sub)}
-                              >
-                                <Icon name="Edit" size={12} />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                onClick={() => handleDeleteCategory(sub.id, sub.name)}
-                              >
-                                <Icon name="Trash2" size={12} />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={categories.map(c => c.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      {categories.map((category) => (
+                        <SortableCategoryItem
+                          key={category.id}
+                          category={category}
+                          selectedCategory={selectedCategory}
+                          expandedCategories={expandedCategories}
+                          onSelect={setSelectedCategory}
+                          onToggle={toggleCategory}
+                          onEdit={openEditCategoryDialog}
+                          onDelete={handleDeleteCategory}
+                        />
+                      ))}
+                    </SortableContext>
+                  </DndContext>
                 </div>
               </CardContent>
             </Card>
