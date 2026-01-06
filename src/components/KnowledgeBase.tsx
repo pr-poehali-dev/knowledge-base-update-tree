@@ -712,12 +712,12 @@ export default function KnowledgeBase() {
               </div>
               <div>
                 <Label htmlFor="cat-parent">Родительская категория (опционально)</Label>
-                <Select value={newCategory.parentId} onValueChange={(value) => setNewCategory({ ...newCategory, parentId: value })}>
+                <Select value={newCategory.parentId || 'none'} onValueChange={(value) => setNewCategory({ ...newCategory, parentId: value === 'none' ? '' : value })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Без родителя (корневая)" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Без родителя (корневая)</SelectItem>
+                    <SelectItem value="none">Без родителя (корневая)</SelectItem>
                     {categories.map(cat => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
