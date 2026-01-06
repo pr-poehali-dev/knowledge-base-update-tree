@@ -7,6 +7,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/use-toast';
 import Icon from '@/components/ui/icon';
 
 interface FAQItem {
@@ -66,7 +67,7 @@ const mockCategories: Category[] = [
   }
 ];
 
-const mockFAQs: FAQItem[] = [
+const initialFAQs: FAQItem[] = [
   {
     id: '1',
     question: 'Как зарегистрироваться в системе?',
@@ -116,13 +117,16 @@ const mockFAQs: FAQItem[] = [
 ];
 
 export default function KnowledgeBase() {
+  const [faqs, setFaqs] = useState<FAQItem[]>(initialFAQs);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['1']);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [newQuestion, setNewQuestion] = useState({ question: '', answer: '', category: '', image: '', video: '' });
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingFaq, setEditingFaq] = useState<FAQItem | null>(null);
+  const [newQuestion, setNewQuestion] = useState({ question: '', answer: '', category: '', tags: '', image: '', video: '' });
 
-  const filteredFAQs = mockFAQs.filter(faq => {
+  const filteredFAQs = faqs.filter(faq => {
     const matchesSearch = searchQuery === '' ||
       faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
       faq.answer.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -142,9 +146,66 @@ export default function KnowledgeBase() {
   };
 
   const handleAddQuestion = () => {
-    console.log('Добавление вопроса:', newQuestion);
+    if (!newQuestion.question || !newQuestion.answer) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните вопрос и ответ",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newFaq: FAQItem = {
+      id: Date.now().toString(),
+      question: newQuestion.question,
+      answer: newQuestion.answer,
+      category: newQuestion.category || 'Общие',
+      tags: newQuestion.tags.split(',').map(t => t.trim()).filter(t => t),
+      image: newQuestion.image || undefined,
+      video: newQuestion.video || undefined
+    };
+
+    setFaqs([...faqs, newFaq]);
     setIsAddDialogOpen(false);
-    setNewQuestion({ question: '', answer: '', category: '', image: '', video: '' });
+    setNewQuestion({ question: '', answer: '', category: '', tags: '', image: '', video: '' });
+    
+    toast({
+      title: "Успешно!",
+      description: "Вопрос добавлен в базу знаний"
+    });
+  };
+
+  const handleEditQuestion = () => {
+    if (!editingFaq || !editingFaq.question || !editingFaq.answer) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните вопрос и ответ",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setFaqs(faqs.map(faq => faq.id === editingFaq.id ? editingFaq : faq));
+    setIsEditDialogOpen(false);
+    setEditingFaq(null);
+    
+    toast({
+      title: "Успешно!",
+      description: "Вопрос обновлен"
+    });
+  };
+
+  const handleDeleteQuestion = (id: string) => {
+    setFaqs(faqs.filter(faq => faq.id !== id));
+    toast({
+      title: "Удалено",
+      description: "Вопрос удален из базы знаний"
+    });
+  };
+
+  const openEditDialog = (faq: FAQItem) => {
+    setEditingFaq({ ...faq });
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -174,7 +235,7 @@ export default function KnowledgeBase() {
                 Добавить вопрос
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-2xl">Добавить новый вопрос</DialogTitle>
                 <DialogDescription>
@@ -183,7 +244,7 @@ export default function KnowledgeBase() {
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="question">Вопрос</Label>
+                  <Label htmlFor="question">Вопрос *</Label>
                   <Input
                     id="question"
                     placeholder="Введите вопрос..."
@@ -192,7 +253,7 @@ export default function KnowledgeBase() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="answer">Ответ</Label>
+                  <Label htmlFor="answer">Ответ *</Label>
                   <Textarea
                     id="answer"
                     placeholder="Введите ответ..."
@@ -205,13 +266,22 @@ export default function KnowledgeBase() {
                   <Label htmlFor="category">Категория</Label>
                   <Input
                     id="category"
-                    placeholder="Выберите категорию..."
+                    placeholder="Например: Начало работы"
                     value={newQuestion.category}
                     onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="image">URL изображения (опционально)</Label>
+                  <Label htmlFor="tags">Теги (через запятую)</Label>
+                  <Input
+                    id="tags"
+                    placeholder="тег1, тег2, тег3"
+                    value={newQuestion.tags}
+                    onChange={(e) => setNewQuestion({ ...newQuestion, tags: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="image">URL изображения</Label>
                   <Input
                     id="image"
                     placeholder="https://..."
@@ -220,7 +290,7 @@ export default function KnowledgeBase() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="video">URL видео (опционально)</Label>
+                  <Label htmlFor="video">URL видео</Label>
                   <Input
                     id="video"
                     placeholder="https://..."
@@ -229,12 +299,87 @@ export default function KnowledgeBase() {
                   />
                 </div>
                 <Button onClick={handleAddQuestion} className="w-full gradient-bg">
+                  <Icon name="Plus" size={18} className="mr-2" />
                   Добавить вопрос
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
         </div>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Редактировать вопрос</DialogTitle>
+              <DialogDescription>
+                Внесите изменения в вопрос
+              </DialogDescription>
+            </DialogHeader>
+            {editingFaq && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-question">Вопрос *</Label>
+                  <Input
+                    id="edit-question"
+                    placeholder="Введите вопрос..."
+                    value={editingFaq.question}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, question: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-answer">Ответ *</Label>
+                  <Textarea
+                    id="edit-answer"
+                    placeholder="Введите ответ..."
+                    rows={4}
+                    value={editingFaq.answer}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, answer: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-category">Категория</Label>
+                  <Input
+                    id="edit-category"
+                    placeholder="Например: Начало работы"
+                    value={editingFaq.category}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, category: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-tags">Теги (через запятую)</Label>
+                  <Input
+                    id="edit-tags"
+                    placeholder="тег1, тег2, тег3"
+                    value={editingFaq.tags.join(', ')}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, tags: e.target.value.split(',').map(t => t.trim()).filter(t => t) })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-image">URL изображения</Label>
+                  <Input
+                    id="edit-image"
+                    placeholder="https://..."
+                    value={editingFaq.image || ''}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, image: e.target.value || undefined })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-video">URL видео</Label>
+                  <Input
+                    id="edit-video"
+                    placeholder="https://..."
+                    value={editingFaq.video || ''}
+                    onChange={(e) => setEditingFaq({ ...editingFaq, video: e.target.value || undefined })}
+                  />
+                </div>
+                <Button onClick={handleEditQuestion} className="w-full gradient-bg">
+                  <Icon name="Save" size={18} className="mr-2" />
+                  Сохранить изменения
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <aside className="lg:col-span-1">
@@ -257,7 +402,7 @@ export default function KnowledgeBase() {
                   >
                     <Icon name="Home" size={18} className="mr-2" />
                     Все категории
-                    <Badge variant="secondary" className="ml-auto">{mockFAQs.length}</Badge>
+                    <Badge variant="secondary" className="ml-auto">{faqs.length}</Badge>
                   </Button>
                   {mockCategories.map((category) => (
                     <div key={category.id} className="space-y-1">
@@ -382,7 +527,7 @@ export default function KnowledgeBase() {
                           </div>
                         </div>
                       )}
-                      <div className="pl-14 flex gap-2">
+                      <div className="pl-14 flex flex-wrap gap-2">
                         <Button variant="outline" size="sm">
                           <Icon name="ThumbsUp" size={16} className="mr-1" />
                           Полезно
@@ -390,6 +535,23 @@ export default function KnowledgeBase() {
                         <Button variant="outline" size="sm">
                           <Icon name="Share2" size={16} className="mr-1" />
                           Поделиться
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openEditDialog(faq)}
+                        >
+                          <Icon name="Edit" size={16} className="mr-1" />
+                          Редактировать
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleDeleteQuestion(faq.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Icon name="Trash2" size={16} className="mr-1" />
+                          Удалить
                         </Button>
                       </div>
                     </div>
