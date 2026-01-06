@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
 
 interface FAQItem {
@@ -28,7 +30,7 @@ interface Category {
   subcategories?: Category[];
 }
 
-const mockCategories: Category[] = [
+const initialCategories: Category[] = [
   {
     id: '1',
     name: 'Начало работы',
@@ -116,15 +118,26 @@ const initialFAQs: FAQItem[] = [
   }
 ];
 
+const iconOptions = [
+  'Rocket', 'Settings', 'HelpCircle', 'Link', 'Star', 'Zap', 'UserPlus', 
+  'AlertCircle', 'Wrench', 'Book', 'Code', 'Database', 'Shield', 'Users',
+  'MessageCircle', 'Package', 'Activity', 'Bell', 'Briefcase', 'Calendar'
+];
+
 export default function KnowledgeBase() {
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [faqs, setFaqs] = useState<FAQItem[]>(initialFAQs);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['1']);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isEditCategoryDialogOpen, setIsEditCategoryDialogOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState<FAQItem | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newQuestion, setNewQuestion] = useState({ question: '', answer: '', category: '', tags: '', image: '', video: '' });
+  const [newCategory, setNewCategory] = useState({ name: '', icon: 'Folder', parentId: '' });
 
   const filteredFAQs = faqs.filter(faq => {
     const matchesSearch = searchQuery === '' ||
@@ -203,10 +216,125 @@ export default function KnowledgeBase() {
     });
   };
 
+  const handleAddCategory = () => {
+    if (!newCategory.name) {
+      toast({
+        title: "Ошибка",
+        description: "Введите название категории",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const categoryToAdd: Category = {
+      id: Date.now().toString(),
+      name: newCategory.name,
+      icon: newCategory.icon,
+      count: 0
+    };
+
+    if (newCategory.parentId) {
+      setCategories(categories.map(cat => {
+        if (cat.id === newCategory.parentId) {
+          return {
+            ...cat,
+            subcategories: [...(cat.subcategories || []), categoryToAdd]
+          };
+        }
+        return cat;
+      }));
+    } else {
+      setCategories([...categories, categoryToAdd]);
+    }
+
+    setIsCategoryDialogOpen(false);
+    setNewCategory({ name: '', icon: 'Folder', parentId: '' });
+    
+    toast({
+      title: "Успешно!",
+      description: "Категория добавлена"
+    });
+  };
+
+  const handleEditCategory = () => {
+    if (!editingCategory || !editingCategory.name) {
+      toast({
+        title: "Ошибка",
+        description: "Введите название категории",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const updateCategory = (cats: Category[]): Category[] => {
+      return cats.map(cat => {
+        if (cat.id === editingCategory.id) {
+          return { ...editingCategory };
+        }
+        if (cat.subcategories) {
+          return {
+            ...cat,
+            subcategories: updateCategory(cat.subcategories)
+          };
+        }
+        return cat;
+      });
+    };
+
+    setCategories(updateCategory(categories));
+    setIsEditCategoryDialogOpen(false);
+    setEditingCategory(null);
+    
+    toast({
+      title: "Успешно!",
+      description: "Категория обновлена"
+    });
+  };
+
+  const handleDeleteCategory = (categoryId: string, categoryName: string) => {
+    const deleteFromCategories = (cats: Category[]): Category[] => {
+      return cats
+        .filter(cat => cat.id !== categoryId)
+        .map(cat => ({
+          ...cat,
+          subcategories: cat.subcategories ? deleteFromCategories(cat.subcategories) : undefined
+        }));
+    };
+
+    setCategories(deleteFromCategories(categories));
+    
+    if (selectedCategory === categoryName) {
+      setSelectedCategory(null);
+    }
+    
+    toast({
+      title: "Удалено",
+      description: "Категория удалена"
+    });
+  };
+
   const openEditDialog = (faq: FAQItem) => {
     setEditingFaq({ ...faq });
     setIsEditDialogOpen(true);
   };
+
+  const openEditCategoryDialog = (category: Category) => {
+    setEditingCategory({ ...category });
+    setIsEditCategoryDialogOpen(true);
+  };
+
+  const getAllCategories = (cats: Category[]): Category[] => {
+    let result: Category[] = [];
+    cats.forEach(cat => {
+      result.push(cat);
+      if (cat.subcategories) {
+        result = [...result, ...getAllCategories(cat.subcategories)];
+      }
+    });
+    return result;
+  };
+
+  const allCategories = getAllCategories(categories);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
@@ -264,12 +392,16 @@ export default function KnowledgeBase() {
                 </div>
                 <div>
                   <Label htmlFor="category">Категория</Label>
-                  <Input
-                    id="category"
-                    placeholder="Например: Начало работы"
-                    value={newQuestion.category}
-                    onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })}
-                  />
+                  <Select value={newQuestion.category} onValueChange={(value) => setNewQuestion({ ...newQuestion, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите категорию" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allCategories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="tags">Теги (через запятую)</Label>
@@ -338,12 +470,16 @@ export default function KnowledgeBase() {
                 </div>
                 <div>
                   <Label htmlFor="edit-category">Категория</Label>
-                  <Input
-                    id="edit-category"
-                    placeholder="Например: Начало работы"
-                    value={editingFaq.category}
-                    onChange={(e) => setEditingFaq({ ...editingFaq, category: e.target.value })}
-                  />
+                  <Select value={editingFaq.category} onValueChange={(value) => setEditingFaq({ ...editingFaq, category: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Выберите категорию" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allCategories.map(cat => (
+                        <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label htmlFor="edit-tags">Теги (через запятую)</Label>
@@ -381,14 +517,127 @@ export default function KnowledgeBase() {
           </DialogContent>
         </Dialog>
 
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Добавить категорию</DialogTitle>
+              <DialogDescription>
+                Создайте новую категорию или подкатегорию
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="cat-name">Название *</Label>
+                <Input
+                  id="cat-name"
+                  placeholder="Название категории"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="cat-icon">Иконка</Label>
+                <Select value={newCategory.icon} onValueChange={(value) => setNewCategory({ ...newCategory, icon: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {iconOptions.map(icon => (
+                      <SelectItem key={icon} value={icon}>
+                        <div className="flex items-center gap-2">
+                          <Icon name={icon as any} size={16} />
+                          {icon}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="cat-parent">Родительская категория (опционально)</Label>
+                <Select value={newCategory.parentId} onValueChange={(value) => setNewCategory({ ...newCategory, parentId: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Без родителя (корневая)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Без родителя (корневая)</SelectItem>
+                    {categories.map(cat => (
+                      <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={handleAddCategory} className="w-full gradient-bg">
+                <Icon name="Plus" size={18} className="mr-2" />
+                Добавить категорию
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isEditCategoryDialogOpen} onOpenChange={setIsEditCategoryDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-2xl">Редактировать категорию</DialogTitle>
+              <DialogDescription>
+                Измените название или иконку категории
+              </DialogDescription>
+            </DialogHeader>
+            {editingCategory && (
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="edit-cat-name">Название *</Label>
+                  <Input
+                    id="edit-cat-name"
+                    placeholder="Название категории"
+                    value={editingCategory.name}
+                    onChange={(e) => setEditingCategory({ ...editingCategory, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-cat-icon">Иконка</Label>
+                  <Select value={editingCategory.icon} onValueChange={(value) => setEditingCategory({ ...editingCategory, icon: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {iconOptions.map(icon => (
+                        <SelectItem key={icon} value={icon}>
+                          <div className="flex items-center gap-2">
+                            <Icon name={icon as any} size={16} />
+                            {icon}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleEditCategory} className="w-full gradient-bg">
+                  <Icon name="Save" size={18} className="mr-2" />
+                  Сохранить изменения
+                </Button>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <aside className="lg:col-span-1">
             <Card className="sticky top-4 border-2 shadow-lg animate-fade-in hover-scale">
               <CardHeader className="gradient-bg text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  <Icon name="FolderTree" size={24} />
-                  Каталог
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Icon name="FolderTree" size={24} />
+                    <CardTitle>Каталог</CardTitle>
+                  </div>
+                  <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
+                        <Icon name="Plus" size={16} />
+                      </Button>
+                    </DialogTrigger>
+                  </Dialog>
+                </div>
                 <CardDescription className="text-white/80">
                   Навигация по темам
                 </CardDescription>
@@ -404,45 +653,76 @@ export default function KnowledgeBase() {
                     Все категории
                     <Badge variant="secondary" className="ml-auto">{faqs.length}</Badge>
                   </Button>
-                  {mockCategories.map((category) => (
+                  {categories.map((category) => (
                     <div key={category.id} className="space-y-1">
-                      <Button
-                        variant={selectedCategory === category.name ? 'default' : 'ghost'}
-                        className="w-full justify-start"
-                        onClick={() => {
-                          setSelectedCategory(category.name);
-                          if (category.subcategories) {
-                            toggleCategory(category.id);
-                          }
-                        }}
-                      >
-                        <Icon name={category.icon as any} size={18} className="mr-2" />
-                        {category.name}
-                        {category.subcategories && (
-                          <Icon
-                            name={expandedCategories.includes(category.id) ? 'ChevronDown' : 'ChevronRight'}
-                            size={16}
-                            className="ml-auto"
-                          />
-                        )}
-                        {!category.subcategories && (
-                          <Badge variant="secondary" className="ml-auto">{category.count}</Badge>
-                        )}
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant={selectedCategory === category.name ? 'default' : 'ghost'}
+                          className="flex-1 justify-start"
+                          onClick={() => {
+                            setSelectedCategory(category.name);
+                            if (category.subcategories) {
+                              toggleCategory(category.id);
+                            }
+                          }}
+                        >
+                          <Icon name={category.icon as any} size={18} className="mr-2" />
+                          {category.name}
+                          {category.subcategories && (
+                            <Icon
+                              name={expandedCategories.includes(category.id) ? 'ChevronDown' : 'ChevronRight'}
+                              size={16}
+                              className="ml-auto"
+                            />
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0"
+                          onClick={() => openEditCategoryDialog(category)}
+                        >
+                          <Icon name="Edit" size={14} />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteCategory(category.id, category.name)}
+                        >
+                          <Icon name="Trash2" size={14} />
+                        </Button>
+                      </div>
                       {category.subcategories && expandedCategories.includes(category.id) && (
                         <div className="ml-6 space-y-1">
                           {category.subcategories.map((sub) => (
-                            <Button
-                              key={sub.id}
-                              variant="ghost"
-                              size="sm"
-                              className="w-full justify-start"
-                              onClick={() => setSelectedCategory(sub.name)}
-                            >
-                              <Icon name={sub.icon as any} size={16} className="mr-2" />
-                              {sub.name}
-                              <Badge variant="secondary" className="ml-auto text-xs">{sub.count}</Badge>
-                            </Button>
+                            <div key={sub.id} className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="flex-1 justify-start"
+                                onClick={() => setSelectedCategory(sub.name)}
+                              >
+                                <Icon name={sub.icon as any} size={16} className="mr-2" />
+                                {sub.name}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0"
+                                onClick={() => openEditCategoryDialog(sub)}
+                              >
+                                <Icon name="Edit" size={12} />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteCategory(sub.id, sub.name)}
+                              >
+                                <Icon name="Trash2" size={12} />
+                              </Button>
+                            </div>
                           ))}
                         </div>
                       )}
