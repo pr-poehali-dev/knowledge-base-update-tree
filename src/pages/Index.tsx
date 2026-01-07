@@ -44,9 +44,11 @@ const Index = () => {
       <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full gradient-bg flex items-center justify-center">
-              <Icon name="BookOpen" size={20} className="text-white" />
-            </div>
+            <img 
+              src="https://cdn.poehali.dev/projects/e9eee953-4329-40dd-9bfe-344b210af164/files/415c8bfd-9b0d-433e-8f62-b84e5b0f3825.jpg" 
+              alt="Сервис Клик"
+              className="w-12 h-12 rounded-lg object-cover"
+            />
             <div>
               <h1 className="text-xl font-bold gradient-text">Сервис Клик</h1>
               <p className="text-xs text-muted-foreground">База знаний сервисного центра</p>

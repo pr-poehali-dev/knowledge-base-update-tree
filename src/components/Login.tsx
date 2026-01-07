@@ -45,9 +45,11 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md border-2 shadow-2xl animate-fade-in">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto w-16 h-16 rounded-full gradient-bg flex items-center justify-center mb-4">
-            <Icon name="Lock" size={32} className="text-white" />
-          </div>
+          <img 
+            src="https://cdn.poehali.dev/projects/e9eee953-4329-40dd-9bfe-344b210af164/files/415c8bfd-9b0d-433e-8f62-b84e5b0f3825.jpg" 
+            alt="Сервис Клик"
+            className="mx-auto w-20 h-20 rounded-xl object-cover mb-4"
+          />
           <CardTitle className="text-3xl gradient-text">Сервис Клик</CardTitle>
           <CardDescription className="text-base">
             Войдите в систему для доступа к базе знаний
