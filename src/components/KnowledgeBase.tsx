@@ -467,7 +467,7 @@ export default function KnowledgeBase() {
     });
   };
 
-  const handleSubmitQuestion = () => {
+  const handleSubmitQuestion = async () => {
     if (!userQuestion.name || !userQuestion.email || !userQuestion.question) {
       toast({
         title: "Ошибка",
@@ -477,13 +477,57 @@ export default function KnowledgeBase() {
       return;
     }
 
-    toast({
-      title: "Вопрос отправлен!",
-      description: "Мы свяжемся с вами в ближайшее время"
-    });
+    const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TELEGRAM_BOT_TOKEN;
+    const TELEGRAM_CHAT_ID = import.meta.env.VITE_TELEGRAM_CHAT_ID || '@element5_irk';
 
-    setIsAskDialogOpen(false);
-    setUserQuestion({ name: '', email: '', question: '' });
+    if (!TELEGRAM_BOT_TOKEN) {
+      toast({
+        title: "Ошибка конфигурации",
+        description: "Токен Telegram не настроен",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const message = `🆘 *Новый вопрос от клиента*\n\n👤 *Имя:* ${userQuestion.name}\n📧 *Email:* ${userQuestion.email}\n\n❓ *Вопрос:*\n${userQuestion.question}`;
+
+      const response = await fetch(
+        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        }
+      );
+
+      const result = await response.json();
+
+      if (result.ok) {
+        toast({
+          title: "Вопрос отправлен!",
+          description: "Мы свяжемся с вами в ближайшее время"
+        });
+        setIsAskDialogOpen(false);
+        setUserQuestion({ name: '', email: '', question: '' });
+      } else {
+        toast({
+          title: "Ошибка отправки",
+          description: "Попробуйте позже или свяжитесь напрямую",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить вопрос",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteCategory = (categoryId: string, categoryName: string) => {
