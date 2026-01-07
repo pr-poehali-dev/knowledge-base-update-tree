@@ -48,7 +48,7 @@ export default function Login() {
           <div className="mx-auto w-16 h-16 rounded-full gradient-bg flex items-center justify-center mb-4">
             <Icon name="Lock" size={32} className="text-white" />
           </div>
-          <CardTitle className="text-3xl gradient-text">База знаний</CardTitle>
+          <CardTitle className="text-3xl gradient-text">Сервис Клик</CardTitle>
           <CardDescription className="text-base">
             Войдите в систему для доступа к базе знаний
           </CardDescription>

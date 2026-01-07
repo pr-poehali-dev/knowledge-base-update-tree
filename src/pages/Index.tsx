@@ -48,8 +48,8 @@ const Index = () => {
               <Icon name="BookOpen" size={20} className="text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold gradient-text">База знаний</h1>
-              <p className="text-xs text-muted-foreground">Система управления знаниями</p>
+              <h1 className="text-xl font-bold gradient-text">Сервис Клик</h1>
+              <p className="text-xs text-muted-foreground">База знаний сервисного центра</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

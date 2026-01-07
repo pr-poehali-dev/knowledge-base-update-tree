@@ -202,6 +202,7 @@ function SortableCategoryItem({
               onToggle(category.id);
             }
           }}
+          title={category.name}
         >
           <Icon name={category.icon as any} size={16} className="mr-2 flex-shrink-0" />
           <span className="truncate">{category.name}</span>
@@ -617,7 +618,7 @@ export default function KnowledgeBase() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
-          <h1 className="text-3xl font-semibold mb-2 text-foreground">База знаний</h1>
+          <h1 className="text-3xl font-semibold mb-2 text-foreground">Сервис Клик</h1>
           <p className="text-sm text-muted-foreground">
             Найдите ответы на вопросы о ремонте техники
           </p>
@@ -633,6 +634,11 @@ export default function KnowledgeBase() {
               className="pl-10 h-10 text-sm"
             />
           </div>
+          
+          <Button variant="outline" className="h-10 px-4" onClick={() => window.print()}>
+            <Icon name="FileDown" size={16} className="mr-2" />
+            Экспорт PDF
+          </Button>
           
           <Dialog open={isAskDialogOpen} onOpenChange={setIsAskDialogOpen}>
             <DialogTrigger asChild>
