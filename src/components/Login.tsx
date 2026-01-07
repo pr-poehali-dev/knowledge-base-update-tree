@@ -100,14 +100,6 @@ export default function Login() {
               <Icon name="LogIn" size={18} className="mr-2" />
               Войти
             </Button>
-
-            <div className="mt-6 p-5 bg-gradient-to-br from-orange-50 to-green-50 rounded-xl border-2 border-orange-100 space-y-2 text-sm">
-              <p className="font-semibold">Тестовые аккаунты:</p>
-              <div className="space-y-1">
-                <p><strong>Администратор:</strong> admin / admin123</p>
-                <p><strong>Пользователь:</strong> user / user123</p>
-              </div>
-            </div>
           </form>
         </CardContent>
       </Card>
