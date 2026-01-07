@@ -184,16 +184,18 @@ function SortableCategoryItem({
   return (
     <div ref={setNodeRef} style={style} className="space-y-1">
       <div className="flex items-center gap-1">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded"
-        >
-          <Icon name="GripVertical" size={16} className="text-muted-foreground" />
-        </div>
+        {isAdmin && (
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-1 hover:bg-accent rounded flex-shrink-0"
+          >
+            <Icon name="GripVertical" size={14} className="text-muted-foreground" />
+          </div>
+        )}
         <Button
           variant={selectedCategory === category.name ? 'default' : 'ghost'}
-          className="flex-1 justify-start"
+          className="flex-1 justify-start text-sm h-9 min-w-0"
           onClick={() => {
             onSelect(category.name);
             if (category.subcategories) {
@@ -201,13 +203,13 @@ function SortableCategoryItem({
             }
           }}
         >
-          <Icon name={category.icon as any} size={18} className="mr-2" />
-          {category.name}
+          <Icon name={category.icon as any} size={16} className="mr-2 flex-shrink-0" />
+          <span className="truncate">{category.name}</span>
           {category.subcategories && (
             <Icon
               name={expandedCategories.includes(category.id) ? 'ChevronDown' : 'ChevronRight'}
-              size={16}
-              className="ml-auto"
+              size={14}
+              className="ml-auto flex-shrink-0"
             />
           )}
         </Button>
@@ -216,18 +218,18 @@ function SortableCategoryItem({
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 flex-shrink-0"
               onClick={() => onEdit(category)}
             >
-              <Icon name="Edit" size={14} />
+              <Icon name="Edit" size={13} />
             </Button>
             <Button
               size="sm"
               variant="ghost"
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              className="h-8 w-8 p-0 text-destructive hover:text-destructive flex-shrink-0"
               onClick={() => onDelete(category.id, category.name)}
             >
-              <Icon name="Trash2" size={14} />
+              <Icon name="Trash2" size={13} />
             </Button>
           </>
         )}
@@ -612,31 +614,31 @@ export default function KnowledgeBase() {
   const allCategories = getAllCategories(categories);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-12 text-center animate-fade-in">
-          <h1 className="text-6xl font-bold mb-4 gradient-text">База знаний</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Найдите ответы на все ваши вопросы в нашей интерактивной базе знаний
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-semibold mb-2 text-foreground">База знаний</h1>
+          <p className="text-sm text-muted-foreground">
+            Найдите ответы на вопросы о ремонте техники
           </p>
         </div>
 
-        <div className="mb-8 flex flex-col sm:flex-row gap-4 animate-slide-up">
+        <div className="mb-6 flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Icon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+            <Icon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
             <Input
-              placeholder="Поиск по вопросам, ответам и тегам..."
+              placeholder="Поиск по вопросам..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 text-lg border-2 focus:border-primary"
+              className="pl-10 h-10 text-sm"
             />
           </div>
           
           <Dialog open={isAskDialogOpen} onOpenChange={setIsAskDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="lg" variant="outline" className="h-12 px-6 border-2">
-                <Icon name="MessageCirclePlus" size={20} className="mr-2" />
-                Задать свой вопрос
+              <Button variant="outline" className="h-10 px-4">
+                <Icon name="MessageCirclePlus" size={16} className="mr-2" />
+                Задать вопрос
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -676,7 +678,7 @@ export default function KnowledgeBase() {
                     onChange={(e) => setUserQuestion({ ...userQuestion, question: e.target.value })}
                   />
                 </div>
-                <Button onClick={handleSubmitQuestion} className="w-full gradient-bg">
+                <Button onClick={handleSubmitQuestion} className="w-full">
                   <Icon name="Send" size={18} className="mr-2" />
                   Отправить вопрос
                 </Button>
@@ -687,8 +689,8 @@ export default function KnowledgeBase() {
           {isAdmin && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="lg" className="gradient-bg hover:opacity-90 transition-opacity h-12 px-8">
-                  <Icon name="Plus" size={20} className="mr-2" />
+                <Button className="h-10 px-4">
+                  <Icon name="Plus" size={16} className="mr-2" />
                   Добавить вопрос
                 </Button>
               </DialogTrigger>
@@ -951,28 +953,25 @@ export default function KnowledgeBase() {
           </DialogContent>
         </Dialog>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <aside className="lg:col-span-1">
-            <Card className="sticky top-4 border-2 shadow-lg animate-fade-in hover-scale">
-              <CardHeader className="gradient-bg text-white rounded-t-lg">
+            <Card className="sticky top-4 border shadow-sm">
+              <CardHeader className="bg-primary text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Icon name="FolderTree" size={24} />
-                    <CardTitle>Каталог</CardTitle>
+                    <Icon name="LayoutList" size={20} />
+                    <CardTitle className="text-base">Категории</CardTitle>
                   </div>
                   {isAdmin && (
                     <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button size="sm" variant="secondary" className="h-8 w-8 p-0">
-                          <Icon name="Plus" size={16} />
+                        <Button size="sm" variant="secondary" className="h-7 w-7 p-0">
+                          <Icon name="Plus" size={14} />
                         </Button>
                       </DialogTrigger>
                     </Dialog>
                   )}
                 </div>
-                <CardDescription className="text-white/80">
-                  Перетащите для изменения порядка
-                </CardDescription>
               </CardHeader>
               <CardContent className="p-4">
                 <div className="space-y-2">
@@ -1044,38 +1043,37 @@ export default function KnowledgeBase() {
               </div>
             </div>
 
-            <Accordion type="single" collapsible className="space-y-4">
+            <Accordion type="single" collapsible className="space-y-3">
               {filteredFAQs.map((faq, index) => (
                 <AccordionItem
                   key={faq.id}
                   value={faq.id}
-                  className="border-2 rounded-xl bg-white shadow-md hover:shadow-xl transition-all animate-slide-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+                  style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <AccordionTrigger 
-                    className="px-6 py-4 hover:no-underline group"
+                    className="px-5 py-4 hover:no-underline"
                     onClick={() => incrementViews(faq.id)}
                   >
-                    <div className="flex items-start gap-4 text-left flex-1">
-                      <div className="mt-1 p-2 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 group-hover:from-purple-200 group-hover:to-pink-200 transition-colors">
-                        <Icon name="MessageCircleQuestion" size={24} className="text-primary" />
+                    <div className="flex items-start gap-3 text-left flex-1">
+                      <div className="mt-0.5 p-2 rounded-md bg-primary/10 flex-shrink-0">
+                        <Icon name="HelpCircle" size={20} className="text-primary" />
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-foreground mb-2">
                           {faq.question}
                         </h3>
-                        <div className="flex flex-wrap gap-2 mt-2">
+                        <div className="flex flex-wrap gap-1.5">
                           <Badge variant="outline" className="text-xs">
-                            <Icon name="Folder" size={12} className="mr-1" />
                             {faq.category}
                           </Badge>
                           {isAdmin && (
                             <Badge variant="secondary" className="text-xs">
-                              <Icon name="Eye" size={12} className="mr-1" />
+                              <Icon name="Eye" size={11} className="mr-1" />
                               {faq.views || 0}
                             </Badge>
                           )}
-                          {faq.tags.map((tag) => (
+                          {faq.tags.slice(0, 3).map((tag) => (
                             <Badge key={tag} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>
@@ -1084,23 +1082,23 @@ export default function KnowledgeBase() {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
+                  <AccordionContent className="px-5 pb-5">
                     <div className="space-y-4">
-                      <p className="text-base leading-relaxed text-foreground/80 pl-14">
+                      <p className="text-sm leading-relaxed text-muted-foreground pl-11">
                         {faq.answer}
                       </p>
                       {faq.image && (
-                        <div className="pl-14">
+                        <div className="pl-11">
                           <img
                             src={faq.image}
                             alt="Иллюстрация"
-                            className="rounded-lg shadow-md w-full max-w-md hover-scale"
+                            className="rounded-md border w-full max-w-md"
                           />
                         </div>
                       )}
                       {faq.video && (
-                        <div className="pl-14">
-                          <div className="aspect-video rounded-lg overflow-hidden shadow-md max-w-2xl">
+                        <div className="pl-11">
+                          <div className="aspect-video rounded-md overflow-hidden border max-w-2xl">
                             <iframe
                               src={faq.video}
                               title="Видео"
@@ -1110,18 +1108,18 @@ export default function KnowledgeBase() {
                           </div>
                         </div>
                       )}
-                      <div className="pl-14 flex flex-wrap gap-2">
+                      <div className="pl-11 flex flex-wrap gap-2">
                         <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => incrementHelpful(faq.id)}
                         >
-                          <Icon name="ThumbsUp" size={16} className="mr-1" />
-                          Полезно {faq.helpful ? `(${faq.helpful})` : ''}
+                          <Icon name="ThumbsUp" size={14} className="mr-1" />
+                          <span className="text-xs">Полезно {faq.helpful ? `(${faq.helpful})` : ''}</span>
                         </Button>
                         <Button variant="outline" size="sm">
-                          <Icon name="Share2" size={16} className="mr-1" />
-                          Поделиться
+                          <Icon name="Share2" size={14} className="mr-1" />
+                          <span className="text-xs">Поделиться</span>
                         </Button>
                         {isAdmin && (
                           <>
