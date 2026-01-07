@@ -13,6 +13,8 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   login: (username: string, password: string) => boolean;
+  register: (username: string, password: string, fullName: string, email: string) => { success: boolean; message: string };
+  resetPassword: (email: string) => { success: boolean; message: string };
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -80,13 +82,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
+  const register = (username: string, password: string, fullName: string, email: string): { success: boolean; message: string } => {
+    const usersStr = localStorage.getItem(USERS_STORAGE_KEY);
+    const passwordsStr = localStorage.getItem('kb_passwords');
+    
+    if (!usersStr || !passwordsStr) {
+      return { success: false, message: 'Ошибка системы' };
+    }
+
+    const users: User[] = JSON.parse(usersStr);
+    const passwords: Record<string, string> = JSON.parse(passwordsStr);
+
+    if (users.find(u => u.username === username)) {
+      return { success: false, message: 'Пользователь с таким логином уже существует' };
+    }
+
+    if (users.find(u => u.email === email)) {
+      return { success: false, message: 'Email уже используется' };
+    }
+
+    const newUser: User = {
+      id: Date.now().toString(),
+      username,
+      role: 'user',
+      fullName,
+      email
+    };
+
+    users.push(newUser);
+    passwords[username] = password;
+
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+    localStorage.setItem('kb_passwords', JSON.stringify(passwords));
+
+    return { success: true, message: 'Регистрация успешна' };
+  };
+
+  const resetPassword = (email: string): { success: boolean; message: string } => {
+    const usersStr = localStorage.getItem(USERS_STORAGE_KEY);
+    
+    if (!usersStr) {
+      return { success: false, message: 'Ошибка системы' };
+    }
+
+    const users: User[] = JSON.parse(usersStr);
+    const user = users.find(u => u.email === email);
+
+    if (!user) {
+      return { success: false, message: 'Пользователь с таким email не найден' };
+    }
+
+    return { success: true, message: `Временный пароль для ${user.username}: temp${user.id}` };
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, register, resetPassword, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );
