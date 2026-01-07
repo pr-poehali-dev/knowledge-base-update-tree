@@ -287,6 +287,8 @@ export default function KnowledgeBase() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [newQuestion, setNewQuestion] = useState({ question: '', answer: '', category: '', tags: '', image: '', video: '' });
   const [newCategory, setNewCategory] = useState({ name: '', icon: 'Folder', parentId: '' });
+  const [isAskDialogOpen, setIsAskDialogOpen] = useState(false);
+  const [userQuestion, setUserQuestion] = useState({ name: '', email: '', question: '' });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -465,6 +467,25 @@ export default function KnowledgeBase() {
     });
   };
 
+  const handleSubmitQuestion = () => {
+    if (!userQuestion.name || !userQuestion.email || !userQuestion.question) {
+      toast({
+        title: "Ошибка",
+        description: "Заполните все поля",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    toast({
+      title: "Вопрос отправлен!",
+      description: "Мы свяжемся с вами в ближайшее время"
+    });
+
+    setIsAskDialogOpen(false);
+    setUserQuestion({ name: '', email: '', question: '' });
+  };
+
   const handleDeleteCategory = (categoryId: string, categoryName: string) => {
     const deleteFromCategories = (cats: Category[]): Category[] => {
       return cats
@@ -530,6 +551,59 @@ export default function KnowledgeBase() {
               className="pl-10 h-12 text-lg border-2 focus:border-primary"
             />
           </div>
+          
+          <Dialog open={isAskDialogOpen} onOpenChange={setIsAskDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="lg" variant="outline" className="h-12 px-6 border-2">
+                <Icon name="MessageCirclePlus" size={20} className="mr-2" />
+                Задать свой вопрос
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="text-2xl">Задать свой вопрос</DialogTitle>
+                <DialogDescription>
+                  Не нашли ответ? Опишите свой вопрос, и мы свяжемся с вами
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="user-name">Ваше имя *</Label>
+                  <Input
+                    id="user-name"
+                    placeholder="Иван Иванов"
+                    value={userQuestion.name}
+                    onChange={(e) => setUserQuestion({ ...userQuestion, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="user-email">Email *</Label>
+                  <Input
+                    id="user-email"
+                    type="email"
+                    placeholder="ivan@example.com"
+                    value={userQuestion.email}
+                    onChange={(e) => setUserQuestion({ ...userQuestion, email: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="user-question">Ваш вопрос *</Label>
+                  <Textarea
+                    id="user-question"
+                    placeholder="Опишите ваш вопрос подробно..."
+                    rows={5}
+                    value={userQuestion.question}
+                    onChange={(e) => setUserQuestion({ ...userQuestion, question: e.target.value })}
+                  />
+                </div>
+                <Button onClick={handleSubmitQuestion} className="w-full gradient-bg">
+                  <Icon name="Send" size={18} className="mr-2" />
+                  Отправить вопрос
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {isAdmin && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
@@ -980,9 +1054,15 @@ export default function KnowledgeBase() {
                   <p className="text-muted-foreground mb-6">
                     Попробуйте изменить поисковый запрос или выбрать другую категорию
                   </p>
-                  <Button onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}>
-                    Сбросить все фильтры
-                  </Button>
+                  <div className="flex gap-3 justify-center">
+                    <Button onClick={() => { setSearchQuery(''); setSelectedCategory(null); }}>
+                      Сбросить все фильтры
+                    </Button>
+                    <Button variant="outline" onClick={() => setIsAskDialogOpen(true)}>
+                      <Icon name="MessageCirclePlus" size={18} className="mr-2" />
+                      Задать вопрос
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             )}
