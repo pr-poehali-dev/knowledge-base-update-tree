@@ -41,7 +41,7 @@ const Index = () => {
 
   return (
     <div>
-      <header className="sticky top-0 z-50 w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+      <header className="sticky top-0 z-50 w-full border-b bg-white/90 backdrop-blur-md shadow-sm supports-[backdrop-filter]:bg-white/70">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <div className="flex items-center gap-4">
             <img 
@@ -51,11 +51,11 @@ const Index = () => {
             />
             <div>
               <h1 className="text-xl font-bold gradient-text">Сервис Клик</h1>
-              <p className="text-xs text-muted-foreground">База знаний сервисного центра</p>
+              <p className="text-xs text-muted-foreground font-medium">База знаний сервисного центра</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted/50">
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-orange-50 to-green-50 border border-orange-100">
               <Icon name={user?.role === 'admin' ? 'Shield' : 'User'} size={18} className="text-primary" />
               <div className="text-sm">
                 <p className="font-semibold">{user?.fullName}</p>

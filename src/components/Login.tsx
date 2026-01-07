@@ -42,16 +42,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-2 shadow-2xl animate-fade-in">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-green-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md border-2 shadow-2xl animate-fade-in rounded-3xl">
         <CardHeader className="text-center space-y-2">
           <img 
             src="https://cdn.poehali.dev/projects/e9eee953-4329-40dd-9bfe-344b210af164/files/415c8bfd-9b0d-433e-8f62-b84e5b0f3825.jpg" 
             alt="Сервис Клик"
-            className="mx-auto w-20 h-20 rounded-xl object-cover mb-4"
+            className="mx-auto w-24 h-24 rounded-2xl object-cover mb-4 shadow-lg"
           />
-          <CardTitle className="text-3xl gradient-text">Сервис Клик</CardTitle>
-          <CardDescription className="text-base">
+          <CardTitle className="text-4xl font-bold gradient-text">Сервис Клик</CardTitle>
+          <CardDescription className="text-base font-medium">
             Войдите в систему для доступа к базе знаний
           </CardDescription>
         </CardHeader>
@@ -67,7 +67,7 @@ export default function Login() {
                   placeholder="Введите логин"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-12 rounded-xl border-2 focus:border-primary"
                   autoComplete="username"
                 />
               </div>
@@ -83,7 +83,7 @@ export default function Login() {
                   placeholder="Введите пароль"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10"
+                  className="pl-10 pr-10 h-12 rounded-xl border-2 focus:border-primary"
                   autoComplete="current-password"
                 />
                 <button
@@ -96,12 +96,12 @@ export default function Login() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full gradient-bg hover:opacity-90 transition-opacity">
+            <Button type="submit" className="w-full h-12 gradient-bg hover:opacity-90 transition-opacity rounded-xl text-base font-semibold">
               <Icon name="LogIn" size={18} className="mr-2" />
               Войти
             </Button>
 
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg space-y-2 text-sm">
+            <div className="mt-6 p-5 bg-gradient-to-br from-orange-50 to-green-50 rounded-xl border-2 border-orange-100 space-y-2 text-sm">
               <p className="font-semibold">Тестовые аккаунты:</p>
               <div className="space-y-1">
                 <p><strong>Администратор:</strong> admin / admin123</p>

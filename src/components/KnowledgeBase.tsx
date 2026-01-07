@@ -615,35 +615,35 @@ export default function KnowledgeBase() {
   const allCategories = getAllCategories(categories);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-semibold mb-2 text-foreground">Сервис Клик</h1>
-          <p className="text-sm text-muted-foreground">
-            Найдите ответы на вопросы о ремонте техники
+    <div className="min-h-screen">
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8 text-center">
+          <h1 className="text-4xl font-bold mb-3 gradient-text">База знаний</h1>
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+            Найдите ответы на вопросы о ремонте техники или задайте свой вопрос
           </p>
         </div>
 
-        <div className="mb-6 flex flex-col sm:flex-row gap-3">
+        <div className="mb-8 flex flex-col sm:flex-row gap-3">
           <div className="flex-1 relative">
-            <Icon name="Search" className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <Icon name="Search" className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
             <Input
               placeholder="Поиск по вопросам..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-10 text-sm"
+              className="pl-12 h-12 text-base rounded-xl border-2 focus:border-primary transition-colors shadow-sm"
             />
           </div>
           
-          <Button variant="outline" className="h-10 px-4" onClick={() => window.print()}>
-            <Icon name="FileDown" size={16} className="mr-2" />
+          <Button variant="outline" className="h-12 px-5 rounded-xl border-2 hover:border-primary hover:bg-orange-50" onClick={() => window.print()}>
+            <Icon name="FileDown" size={18} className="mr-2" />
             Экспорт PDF
           </Button>
           
           <Dialog open={isAskDialogOpen} onOpenChange={setIsAskDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="h-10 px-4">
-                <Icon name="MessageCirclePlus" size={16} className="mr-2" />
+              <Button className="h-12 px-6 rounded-xl gradient-bg hover:opacity-90">
+                <Icon name="MessageCirclePlus" size={18} className="mr-2" />
                 Задать вопрос
               </Button>
             </DialogTrigger>
@@ -695,8 +695,8 @@ export default function KnowledgeBase() {
           {isAdmin && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="h-10 px-4">
-                  <Icon name="Plus" size={16} className="mr-2" />
+                <Button className="h-12 px-5 rounded-xl gradient-bg hover:opacity-90">
+                  <Icon name="Plus" size={18} className="mr-2" />
                   Добавить вопрос
                 </Button>
               </DialogTrigger>
@@ -961,12 +961,12 @@ export default function KnowledgeBase() {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <aside className="lg:col-span-1">
-            <Card className="sticky top-4 border shadow-sm">
-              <CardHeader className="bg-primary text-white">
+            <Card className="sticky top-4 border-2 shadow-lg rounded-2xl overflow-hidden">
+              <CardHeader className="gradient-bg text-white">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Icon name="LayoutList" size={20} />
-                    <CardTitle className="text-base">Категории</CardTitle>
+                  <div className="flex items-center gap-3">
+                    <Icon name="LayoutList" size={22} />
+                    <CardTitle className="text-lg font-bold">Категории</CardTitle>
                   </div>
                   {isAdmin && (
                     <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
@@ -1054,33 +1054,33 @@ export default function KnowledgeBase() {
                 <AccordionItem
                   key={faq.id}
                   value={faq.id}
-                  className="border rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow"
+                  className="border-2 rounded-2xl bg-white shadow-md card-hover"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <AccordionTrigger 
-                    className="px-5 py-4 hover:no-underline"
+                    className="px-6 py-5 hover:no-underline"
                     onClick={() => incrementViews(faq.id)}
                   >
-                    <div className="flex items-start gap-3 text-left flex-1">
-                      <div className="mt-0.5 p-2 rounded-md bg-primary/10 flex-shrink-0">
-                        <Icon name="HelpCircle" size={20} className="text-primary" />
+                    <div className="flex items-start gap-4 text-left flex-1">
+                      <div className="mt-1 p-3 rounded-xl gradient-bg flex-shrink-0">
+                        <Icon name="HelpCircle" size={22} className="text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-foreground mb-2">
+                        <h3 className="text-lg font-bold text-foreground mb-3">
                           {faq.question}
                         </h3>
-                        <div className="flex flex-wrap gap-1.5">
-                          <Badge variant="outline" className="text-xs">
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="outline" className="text-xs px-3 py-1 rounded-full border-orange-300 text-orange-700 bg-orange-50">
                             {faq.category}
                           </Badge>
                           {isAdmin && (
-                            <Badge variant="secondary" className="text-xs">
-                              <Icon name="Eye" size={11} className="mr-1" />
+                            <Badge variant="secondary" className="text-xs px-3 py-1 rounded-full bg-green-50 text-green-700">
+                              <Icon name="Eye" size={12} className="mr-1" />
                               {faq.views || 0}
                             </Badge>
                           )}
                           {faq.tags.slice(0, 3).map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
+                            <Badge key={tag} variant="secondary" className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700">
                               {tag}
                             </Badge>
                           ))}
@@ -1088,9 +1088,9 @@ export default function KnowledgeBase() {
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent className="px-5 pb-5">
-                    <div className="space-y-4">
-                      <p className="text-sm leading-relaxed text-muted-foreground pl-11">
+                  <AccordionContent className="px-6 pb-6">
+                    <div className="space-y-5">
+                      <p className="text-base leading-relaxed text-muted-foreground pl-[4.5rem]">
                         {faq.answer}
                       </p>
                       {faq.image && (
@@ -1114,18 +1114,19 @@ export default function KnowledgeBase() {
                           </div>
                         </div>
                       )}
-                      <div className="pl-11 flex flex-wrap gap-2">
+                      <div className="pl-[4.5rem] flex flex-wrap gap-3">
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="rounded-xl border-2 hover:border-green-500 hover:bg-green-50"
                           onClick={() => incrementHelpful(faq.id)}
                         >
-                          <Icon name="ThumbsUp" size={14} className="mr-1" />
-                          <span className="text-xs">Полезно {faq.helpful ? `(${faq.helpful})` : ''}</span>
+                          <Icon name="ThumbsUp" size={16} className="mr-2" />
+                          <span className="text-sm font-medium">Полезно {faq.helpful ? `(${faq.helpful})` : ''}</span>
                         </Button>
-                        <Button variant="outline" size="sm">
-                          <Icon name="Share2" size={14} className="mr-1" />
-                          <span className="text-xs">Поделиться</span>
+                        <Button variant="outline" size="sm" className="rounded-xl border-2 hover:border-orange-500 hover:bg-orange-50">
+                          <Icon name="Share2" size={16} className="mr-2" />
+                          <span className="text-sm font-medium">Поделиться</span>
                         </Button>
                         {isAdmin && (
                           <>
