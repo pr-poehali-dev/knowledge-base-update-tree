@@ -37,6 +37,8 @@ interface FAQItem {
   tags: string[];
   image?: string;
   video?: string;
+  views?: number;
+  helpful?: number;
 }
 
 interface Category {
@@ -275,7 +277,10 @@ export default function KnowledgeBase() {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [categories, setCategories] = useState<Category[]>(initialCategories);
-  const [faqs, setFaqs] = useState<FAQItem[]>(initialFAQs);
+  const [faqs, setFaqs] = useState<FAQItem[]>(() => {
+    const saved = localStorage.getItem('kb_faqs');
+    return saved ? JSON.parse(saved) : initialFAQs.map(faq => ({ ...faq, views: 0, helpful: 0 }));
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>(['1']);
@@ -289,6 +294,7 @@ export default function KnowledgeBase() {
   const [newCategory, setNewCategory] = useState({ name: '', icon: 'Folder', parentId: '' });
   const [isAskDialogOpen, setIsAskDialogOpen] = useState(false);
   const [userQuestion, setUserQuestion] = useState({ name: '', email: '', question: '' });
+  const [viewStats, setViewStats] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -306,7 +312,35 @@ export default function KnowledgeBase() {
     const matchesCategory = !selectedCategory || faq.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
+  }).sort((a, b) => {
+    if (viewStats) {
+      return (b.views || 0) - (a.views || 0);
+    }
+    return 0;
   });
+
+  const saveFAQs = (updatedFaqs: FAQItem[]) => {
+    setFaqs(updatedFaqs);
+    localStorage.setItem('kb_faqs', JSON.stringify(updatedFaqs));
+  };
+
+  const incrementViews = (faqId: string) => {
+    const updatedFaqs = faqs.map(faq =>
+      faq.id === faqId ? { ...faq, views: (faq.views || 0) + 1 } : faq
+    );
+    saveFAQs(updatedFaqs);
+  };
+
+  const incrementHelpful = (faqId: string) => {
+    const updatedFaqs = faqs.map(faq =>
+      faq.id === faqId ? { ...faq, helpful: (faq.helpful || 0) + 1 } : faq
+    );
+    saveFAQs(updatedFaqs);
+    toast({
+      title: "Спасибо!",
+      description: "Ваш отзыв учтён"
+    });
+  };
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>
@@ -351,10 +385,12 @@ export default function KnowledgeBase() {
       category: newQuestion.category || 'Общие',
       tags: newQuestion.tags.split(',').map(t => t.trim()).filter(t => t),
       image: newQuestion.image || undefined,
-      video: newQuestion.video || undefined
+      video: newQuestion.video || undefined,
+      views: 0,
+      helpful: 0
     };
 
-    setFaqs([...faqs, newFaq]);
+    saveFAQs([...faqs, newFaq]);
     setIsAddDialogOpen(false);
     setNewQuestion({ question: '', answer: '', category: '', tags: '', image: '', video: '' });
     
@@ -374,7 +410,7 @@ export default function KnowledgeBase() {
       return;
     }
 
-    setFaqs(faqs.map(faq => faq.id === editingFaq.id ? editingFaq : faq));
+    saveFAQs(faqs.map(faq => faq.id === editingFaq.id ? editingFaq : faq));
     setIsEditDialogOpen(false);
     setEditingFaq(null);
     
@@ -385,7 +421,7 @@ export default function KnowledgeBase() {
   };
 
   const handleDeleteQuestion = (id: string) => {
-    setFaqs(faqs.filter(faq => faq.id !== id));
+    saveFAQs(faqs.filter(faq => faq.id !== id));
     toast({
       title: "Удалено",
       description: "Вопрос удален из базы знаний"
@@ -984,16 +1020,28 @@ export default function KnowledgeBase() {
               <p className="text-muted-foreground">
                 Найдено результатов: <span className="font-bold text-foreground">{filteredFAQs.length}</span>
               </p>
-              {selectedCategory && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCategory(null)}
-                >
-                  <Icon name="X" size={16} className="mr-1" />
-                  Сбросить фильтр
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {isAdmin && (
+                  <Button
+                    variant={viewStats ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setViewStats(!viewStats)}
+                  >
+                    <Icon name={viewStats ? 'BarChart3' : 'BarChart'} size={16} className="mr-1" />
+                    {viewStats ? 'По популярности' : 'Статистика'}
+                  </Button>
+                )}
+                {selectedCategory && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedCategory(null)}
+                  >
+                    <Icon name="X" size={16} className="mr-1" />
+                    Сбросить фильтр
+                  </Button>
+                )}
+              </div>
             </div>
 
             <Accordion type="single" collapsible className="space-y-4">
@@ -1004,7 +1052,10 @@ export default function KnowledgeBase() {
                   className="border-2 rounded-xl bg-white shadow-md hover:shadow-xl transition-all animate-slide-up"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <AccordionTrigger className="px-6 py-4 hover:no-underline group">
+                  <AccordionTrigger 
+                    className="px-6 py-4 hover:no-underline group"
+                    onClick={() => incrementViews(faq.id)}
+                  >
                     <div className="flex items-start gap-4 text-left flex-1">
                       <div className="mt-1 p-2 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 group-hover:from-purple-200 group-hover:to-pink-200 transition-colors">
                         <Icon name="MessageCircleQuestion" size={24} className="text-primary" />
@@ -1018,6 +1069,12 @@ export default function KnowledgeBase() {
                             <Icon name="Folder" size={12} className="mr-1" />
                             {faq.category}
                           </Badge>
+                          {isAdmin && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Icon name="Eye" size={12} className="mr-1" />
+                              {faq.views || 0}
+                            </Badge>
+                          )}
                           {faq.tags.map((tag) => (
                             <Badge key={tag} variant="secondary" className="text-xs">
                               {tag}
@@ -1054,9 +1111,13 @@ export default function KnowledgeBase() {
                         </div>
                       )}
                       <div className="pl-14 flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => incrementHelpful(faq.id)}
+                        >
                           <Icon name="ThumbsUp" size={16} className="mr-1" />
-                          Полезно
+                          Полезно {faq.helpful ? `(${faq.helpful})` : ''}
                         </Button>
                         <Button variant="outline" size="sm">
                           <Icon name="Share2" size={16} className="mr-1" />
