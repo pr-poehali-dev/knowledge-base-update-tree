@@ -5,15 +5,39 @@ import Login from '@/components/Login';
 import KnowledgeBase from '@/components/KnowledgeBase';
 import AdminPanel from '@/components/AdminPanel';
 import Icon from '@/components/ui/icon';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Index = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const [showAdminPanel, setShowAdminPanel] = useState(false);
+  const [zoom, setZoom] = useState(() => {
+    const saved = localStorage.getItem('app_zoom');
+    return saved ? parseFloat(saved) : 1;
+  });
+
+  useEffect(() => {
+    document.documentElement.style.zoom = zoom.toString();
+    localStorage.setItem('app_zoom', zoom.toString());
+  }, [zoom]);
 
   if (!isAuthenticated) {
     return <Login />;
   }
+
+  const zoomLevels = [
+    { value: 0.75, label: '75%' },
+    { value: 0.85, label: '85%' },
+    { value: 1, label: '100%' },
+    { value: 1.1, label: '110%' },
+    { value: 1.25, label: '125%' },
+    { value: 1.5, label: '150%' }
+  ];
 
   return (
     <div>
@@ -38,6 +62,31 @@ const Index = () => {
                 </Badge>
               </div>
             </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Icon name="ZoomIn" size={18} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {zoomLevels.map((level) => (
+                  <DropdownMenuItem
+                    key={level.value}
+                    onClick={() => setZoom(level.value)}
+                    className={zoom === level.value ? 'bg-accent' : ''}
+                  >
+                    <Icon 
+                      name={zoom === level.value ? 'Check' : 'Circle'} 
+                      size={16} 
+                      className="mr-2"
+                    />
+                    {level.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             {user?.role === 'admin' && (
               <Button
                 variant={showAdminPanel ? 'default' : 'outline'}
